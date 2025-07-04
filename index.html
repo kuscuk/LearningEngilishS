@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>İngilizce Seviye Testi</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #6b8dd6, #a1d1ff);
+    color: #222;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  #levelSelector button {
+    margin: 5px;
+    padding: 10px 20px;
+    border: none;
+    background: #3a6ed8;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+  #levelSelector button:hover {
+    background: #2c54b7;
+  }
+  #levelSelector button.active {
+    background: #1b3a91;
+  }
+  #quizContainer {
+    margin-top: 20px;
+    width: 90%;
+    max-width: 600px;
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.15);
+    position: relative;
+    min-height: 280px;
+  }
+  #questionCounter {
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-align: right;
+    color: #555;
+  }
+  #questionText {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    min-height: 50px;
+  }
+  #optionButtons button {
+    display: block;
+    width: 100%;
+    margin: 7px 0;
+    padding: 12px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 2px solid #3a6ed8;
+    background: white;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+  }
+  #optionButtons button:hover:not(:disabled) {
+    background: #3a6ed8;
+    color: white;
+  }
+  #optionButtons button:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+  #optionButtons button.correct {
+    background: #4caf50;
+    color: white;
+    border-color: #388e3c;
+  }
+  #optionButtons button.wrong {
+    background: #e53935;
+    color: white;
+    border-color: #b71c1c;
+  }
+  .navigation {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .navigation button {
+    padding: 10px 20px;
+    border: none;
+    background: #3a6ed8;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+  .navigation button:disabled {
+    background: #9bbcf9;
+    cursor: default;
+  }
+  .fade-in {
+    animation: fadeInAnim 0.3s forwards;
+  }
+  .fade-out {
+    animation: fadeOutAnim 0.3s forwards;
+  }
+  @keyframes fadeInAnim {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+  @keyframes fadeOutAnim {
+    from {opacity: 1;}
+    to {opacity: 0;}
+  }
+  #result {
+    margin-top: 25px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 15px;
+    color: #333;
+    font-weight: 600;
+    display: none;
+  }
+</style>
+
+
+<body>
+
+<h1>İngilizce Seviye Testi</h1>
+
+<div id="levelSelector">
+  <button data-level="A1" class="active">A1</button>
+  <button data-level="A2">A2</button>
+  <button data-level="A3">A3</button>
+  <button data-level="B1">B1</button>
+  <button data-level="B2">B2</button>
+  <button data-level="C1">C1</button>
+  <button data-level="C2">C2</button>
+  <button data-level="C3">C3</button>
+</div>
+
+<div id="quizContainer">
+  <div id="questionCounter">Soru 1 / 20</div>
+  <div id="questionText"></div>
+  <div id="optionButtons"></div>
+
+  <div class="navigation">
+    <button id="prevBtn" disabled>Geri</button>
+    <button id="nextBtn" disabled>İleri</button>
+  </div>
+</div>
+
+<div id="result"></div>
+
+<script>
+  const quizData = {
+  A1: [
+    { question: "Kedi kelimesinin çoğulu nedir?", options: ["cats", "cat", "cates", "catz"], correct: "cats" },
+    { question: "'Benim adım ...' cümlesi nasıl başlar?", options: ["My name is", "I am", "You are", "He is"], correct: "My name is" },
+    { question: "'O bir öğrenci.' cümlesinde hangi fiil kullanılır?", options: ["is", "are", "am", "be"], correct: "is" },
+    { question: "'Kitap' kelimesi İngilizce'de nasıldır?", options: ["book", "pen", "table", "chair"], correct: "book" },
+    { question: "'Ben her gün okula giderim.' cümlesinde hangi fiil kullanılır?", options: ["go", "goes", "went", "going"], correct: "go" },
+    { question: "'Onlar mutludur.' cümlesinde hangi yardımcı fiil vardır?", options: ["are", "is", "am", "be"], correct: "are" },
+    { question: "'Benim bir kalemim var.' cümlesinde hangi kelime 'var' anlamına gelir?", options: ["have", "has", "had", "having"], correct: "have" },
+    { question: "'Bugün hava nasıl?' cümlesinde hangi soru kelimesi var?", options: ["How", "What", "Where", "When"], correct: "How" },
+    { question: "'Sen nerelisin?' cümlesinin İngilizcesi?", options: ["Where are you from?", "Who are you?", "What is your name?", "When are you coming?"], correct: "Where are you from?" },
+    { question: "'Ev' kelimesinin İngilizcesi nedir?", options: ["house", "car", "street", "school"], correct: "house" },
+    { question: "'O bir kızdır.' cümlesinde hangi kelime 'kız' demektir?", options: ["girl", "boy", "man", "woman"], correct: "girl" },
+    { question: "'Benim babam doktor.' cümlesinde 'doktor' nasıl söylenir?", options: ["doctor", "teacher", "driver", "nurse"], correct: "doctor" },
+    { question: "'O oynuyor.' cümlesinin İngilizcesi?", options: ["He is playing", "He play", "He plays", "He played"], correct: "He is playing" },
+    { question: "'Hangi renk kırmızıdır?' cümlesinde kırmızı nasıl söylenir?", options: ["red", "blue", "green", "yellow"], correct: "red" },
+    { question: "'Sen aç mısın?' cümlesinde hangi kelime 'aç' anlamına gelir?", options: ["hungry", "thirsty", "tired", "happy"], correct: "hungry" },
+    { question: "'O gidiyor.' cümlesinde hangi kelime 'gidiyor' anlamında?", options: ["is going", "go", "went", "gone"], correct: "is going" },
+    { question: "'Bugün günlerden ne?' cümlesi İngilizce?", options: ["What day is it today?", "Where is it today?", "When is it today?", "Who is it today?"], correct: "What day is it today?" },
+    { question: "'Çalışmak' fiili nedir?", options: ["work", "play", "study", "run"], correct: "work" },
+    { question: "'Sen kaç yaşındasın?' İngilizce cümle?", options: ["How old are you?", "Where are you?", "What is your name?", "Who are you?"], correct: "How old are you?" },
+    { question: "'Teşekkür ederim' İngilizcesi nedir?", options: ["Thank you", "Please", "Sorry", "Hello"], correct: "Thank you" }
+  ],
+  A2: [
+    { question: "'Yesterday' kelimesinin anlamı nedir?", options: ["Dün", "Bugün", "Yarın", "Hafta sonu"], correct: "Dün" },
+    { question: "'I have been to London.' cümlesi ne anlama gelir?", options: ["Londra'ya gittim", "Londra'dayım", "Londra'ya gidiyorum", "Londra'yı seviyorum"], correct: "Londra'ya gittim" },
+    { question: "'How often do you exercise?' cümlesinde ne sorulur?", options: ["Ne sıklıkta egzersiz yaparsın?", "Ne kadar sıkı çalışırsın?", "Nerede egzersiz yaparsın?", "Ne zaman egzersiz yaparsın?"], correct: "Ne sıklıkta egzersiz yaparsın?" },
+    { question: "'I am going to travel next week.' cümlesi hangi zamanı anlatır?", options: ["Gelecek zaman", "Şimdiki zaman", "Geçmiş zaman", "Geniş zaman"], correct: "Gelecek zaman" },
+    { question: "'Could you please help me?' cümlesinde hangi anlam vardır?", options: ["Nazik bir yardım isteği", "Emir", "Şüphe", "İstek"], correct: "Nazik bir yardım isteği" },
+    { question: "'He has lived here since 2010.' cümlesi hangi zamanı anlatır?", options: ["Şimdiki zamanın hikayesi", "Gelecek zaman", "Geçmiş zaman", "Geniş zaman"], correct: "Şimdiki zamanın hikayesi" },
+    { question: "'I would like a cup of tea.' cümlesinin anlamı nedir?", options: ["Bir fincan çay isterim", "Çay içmiyorum", "Çay demledim", "Çayı seviyorum"], correct: "Bir fincan çay isterim" },
+    { question: "'They have been working all day.' cümlesi hangi zamanı anlatır?", options: ["Şimdiki zamanın hikayesi", "Geçmiş zaman", "Geniş zaman", "Gelecek zaman"], correct: "Şimdiki zamanın hikayesi" },
+    { question: "'What are you doing now?' cümlesi hangi zamanı anlatır?", options: ["Şimdiki zaman", "Gelecek zaman", "Geçmiş zaman", "Geniş zaman"], correct: "Şimdiki zaman" },
+    { question: "'She doesn't like coffee.' cümlesi ne anlama gelir?", options: ["O kahve sevmez", "O kahve içer", "O kahve yapar", "O kahve satın alır"], correct: "O kahve sevmez" },
+    { question: "'Can you swim?' cümlesinde ne sorulur?", options: ["Yüzme biliyor musun?", "Yüzüyor musun?", "Yüzmek ister misin?", "Yüzme yapıyor musun?"], correct: "Yüzme biliyor musun?" },
+    { question: "'I have never been to Paris.' cümlesi ne anlama gelir?", options: ["Paris'e hiç gitmedim", "Paris'teyim", "Paris'i seviyorum", "Paris'ten geldim"], correct: "Paris'e hiç gitmedim" },
+    { question: "'She was reading when I called.' cümlesi hangi zamanı anlatır?", options: ["Geçmiş zamanın hikayesi", "Gelecek zaman", "Şimdiki zaman", "Geniş zaman"], correct: "Geçmiş zamanın hikayesi" },
+    { question: "'Would you like some coffee?' cümlesi ne anlama gelir?", options: ["Biraz kahve ister misin?", "Kahve içiyorum", "Kahve yapıyorum", "Kahve seviyorum"], correct: "Biraz kahve ister misin?" },
+    { question: "'They didn't come to the party.' cümlesi ne anlama gelir?", options: ["Partiye gelmediler", "Partideyim", "Parti yapıyoruz", "Parti bitti"], correct: "Partiye gelmediler" },
+    { question: "'I am going to watch a movie.' cümlesi hangi zamanı anlatır?", options: ["Gelecek zaman", "Şimdiki zaman", "Geçmiş zaman", "Geniş zaman"], correct: "Gelecek zaman" },
+    { question: "'How much does it cost?' cümlesi ne anlama gelir?", options: ["Ne kadar tutar?", "Ne kadar zaman?", "Nerede?", "Kim?"], correct: "Ne kadar tutar?" },
+    { question: "'I have to study tonight.' cümlesi ne anlama gelir?", options: ["Bu gece ders çalışmalıyım", "Ders çalışıyorum", "Ders çalıştım", "Ders çalışmayacağım"], correct: "Bu gece ders çalışmalıyım" },
+    { question: "'She is taller than me.' cümlesi ne anlama gelir?", options: ["O benden uzun", "Ben ondan uzun", "O çok kısa", "Ben çok uzun"], correct: "O benden uzun" },
+    { question: "'What time do you get up?' cümlesi ne anlama gelir?", options: ["Saat kaçta kalkarsın?", "Saat kaçta uyursun?", "Saat kaçta okula gidersin?", "Saat kaçta ders çalışırsın?"], correct: "Saat kaçta kalkarsın?" }
+  ],
+  A3: [
+    { question: "'I have been working here for five years.' cümlesinde hangi zaman var?", options: ["Present Perfect Continuous", "Past Simple", "Future Perfect", "Present Simple"], correct: "Present Perfect Continuous" },
+    { question: "'If I were you, I would study harder.' cümlesinde hangi yapı kullanılmıştır?", options: ["Second Conditional", "First Conditional", "Zero Conditional", "Third Conditional"], correct: "Second Conditional" },
+    { question: "'The book was written by an unknown author.' cümlesinde hangi yapı var?", options: ["Passive Voice", "Active Voice", "Reported Speech", "Direct Speech"], correct: "Passive Voice" },
+    { question: "'By the time she arrives, we will have finished.' cümlesi hangi zamanı anlatır?", options: ["Future Perfect", "Past Perfect", "Present Perfect", "Future Continuous"], correct: "Future Perfect" },
+    { question: "'I wish I had studied more.' cümlesinde hangi duygu ifade edilir?", options: ["Keşke daha çok çalışsaydım", "Şimdi çalışıyorum", "Gelecek planlarım var", "Mutluyum"], correct: "Keşke daha çok çalışsaydım" },
+    { question: "'He suggested that we should leave early.' cümlesinde hangi anlatım vardır?", options: ["Reported Speech", "Direct Speech", "Passive Voice", "Question"], correct: "Reported Speech" },
+    { question: "'I am used to waking up early.' cümlesinde hangi yapı vardır?", options: ["Be used to + Ving", "Used to + V1", "Will + V1", "Am + Ving"], correct: "Be used to + Ving" },
+    { question: "'She has been living in London since 2015.' cümlesinde hangi zaman var?", options: ["Present Perfect Continuous", "Past Simple", "Future Simple", "Present Simple"], correct: "Present Perfect Continuous" },
+    { question: "'If I had known, I would have come earlier.' cümlesinde hangi yapı var?", options: ["Third Conditional", "Second Conditional", "First Conditional", "Zero Conditional"], correct: "Third Conditional" },
+    { question: "'They had been waiting for hours.' cümlesinde hangi zaman var?", options: ["Past Perfect Continuous", "Past Simple", "Present Perfect", "Future Perfect"], correct: "Past Perfect Continuous" },
+    { question: "'She asked if I was coming.' cümlesinde hangi yapı vardır?", options: ["Indirect Question", "Direct Question", "Passive Voice", "Reported Speech"], correct: "Indirect Question" },
+    { question: "'I will have finished by then.' cümlesinde hangi zaman var?", options: ["Future Perfect", "Future Simple", "Present Perfect", "Past Simple"], correct: "Future Perfect" },
+    { question: "'It's important that he be here on time.' cümlesinde hangi yapı vardır?", options: ["Subjunctive Mood", "Indicative Mood", "Imperative Mood", "Conditional Mood"], correct: "Subjunctive Mood" },
+    { question: "'Despite the rain, we went out.' cümlesinde hangi bağlaç var?", options: ["Despite", "Because", "Although", "Since"], correct: "Despite" },
+    { question: "'He refused to help.' cümlesinde hangi yapı vardır?", options: ["Infinitive", "Gerund", "Participle", "Modal Verb"], correct: "Infinitive" },
+    { question: "'She would rather stay home.' cümlesinde hangi yapı var?", options: ["Would rather + V1", "Would + V1", "Will + V1", "Should + V1"], correct: "Would rather + V1" },
+    { question: "'If only I were taller.' cümlesinde hangi duygu ifade edilir?", options: ["Keşke daha uzun olsaydım", "Mutluyum", "Üzgünüm", "Korkuyorum"], correct: "Keşke daha uzun olsaydım" },
+    { question: "'They suggested going to the cinema.' cümlesinde hangi yapı vardır?", options: ["Gerund", "Infinitive", "Participle", "Modal Verb"], correct: "Gerund" },
+    { question: "'I can't help laughing.' cümlesinde hangi yapı var?", options: ["Can't help + Ving", "Don't help + V1", "Can't help + V1", "Don't help + Ving"], correct: "Can't help + Ving" },
+    { question: "'Had I known, I would have acted differently.' cümlesinde hangi yapı vardır?", options: ["Inversion", "Direct Speech", "Reported Speech", "Passive Voice"], correct: "Inversion" }
+  ],
+  B1: [
+    { question: "'I am looking forward to my vacation.' cümlesinde hangi yapı vardır?", options: ["Look forward to + Ving", "Look forward + V1", "Looking + to + V1", "Look + forward + Ving"], correct: "Look forward to + Ving" },
+    { question: "'She managed to finish the project on time.' cümlesinde hangi yapı vardır?", options: ["Manage to + V1", "Managed + Ving", "Managing + to + V1", "Manage + Ving"], correct: "Manage to + V1" },
+    { question: "'If it rains, we will stay home.' cümlesinde hangi yapı vardır?", options: ["First Conditional", "Second Conditional", "Zero Conditional", "Third Conditional"], correct: "First Conditional" },
+    { question: "'He used to play football when he was young.' cümlesinde hangi yapı vardır?", options: ["Used to + V1", "Use to + V1", "Using to + V1", "Used + Ving"], correct: "Used to + V1" },
+    { question: "'They have been friends for years.' cümlesinde hangi zaman var?", options: ["Present Perfect", "Past Simple", "Present Simple", "Future Perfect"], correct: "Present Perfect" },
+    { question: "'I had finished my homework before dinner.' cümlesinde hangi zaman var?", options: ["Past Perfect", "Past Simple", "Present Perfect", "Future Perfect"], correct: "Past Perfect" },
+    { question: "'Would you mind closing the door?' cümlesinde hangi yapı var?", options: ["Would you mind + Ving", "Would you mind + V1", "Would you mind + to + V1", "Would you mind + Ved"], correct: "Would you mind + Ving" },
+    { question: "'She is interested in learning French.' cümlesinde hangi yapı var?", options: ["Interested in + Ving", "Interested + V1", "Interest + to + V1", "Interested + to + Ving"], correct: "Interested in + Ving" },
+    { question: "'They will have arrived by noon.' cümlesinde hangi zaman var?", options: ["Future Perfect", "Future Simple", "Present Perfect", "Past Perfect"], correct: "Future Perfect" },
+    { question: "'If I were you, I would apologize.' cümlesinde hangi yapı var?", options: ["Second Conditional", "First Conditional", "Third Conditional", "Zero Conditional"], correct: "Second Conditional" },
+    { question: "'She can speak three languages.' cümlesinde hangi modal verb var?", options: ["Can", "Could", "Will", "Must"], correct: "Can" },
+    { question: "'I don't have to work tomorrow.' cümlesinde hangi anlam var?", options: ["Gerek yok", "Zorunluluk var", "İzin var", "Olmaz"], correct: "Gerek yok" },
+    { question: "'They suggested going to the park.' cümlesinde hangi yapı var?", options: ["Gerund", "Infinitive", "Participle", "Modal Verb"], correct: "Gerund" },
+    { question: "'I used to live in New York.' cümlesinde hangi yapı var?", options: ["Used to + V1", "Use to + V1", "Using to + V1", "Used + Ving"], correct: "Used to + V1" },
+    { question: "'We will be waiting for you.' cümlesinde hangi zaman var?", options: ["Future Continuous", "Future Simple", "Present Continuous", "Past Continuous"], correct: "Future Continuous" },
+    { question: "'He has been working since morning.' cümlesinde hangi zaman var?", options: ["Present Perfect Continuous", "Present Perfect", "Past Simple", "Future Perfect"], correct: "Present Perfect Continuous" },
+    { question: "'If they had known, they would have come.' cümlesinde hangi yapı var?", options: ["Third Conditional", "Second Conditional", "First Conditional", "Zero Conditional"], correct: "Third Conditional" },
+    { question: "'She must be at home.' cümlesinde hangi modal verb var?", options: ["Must", "Can", "Should", "May"], correct: "Must" },
+    { question: "'I am going to start a new job.' cümlesinde hangi zaman var?", options: ["Be going to (future plan)", "Present Continuous", "Future Simple", "Present Simple"], correct: "Be going to (future plan)" },
+    { question: "'Can you tell me the way to the station?' cümlesinde hangi yapı var?", options: ["Can + V1", "Could + V1", "Should + V1", "Must + V1"], correct: "Can + V1" }
+  ],
+  B2: [
+    { question: "By the time we arrived, the movie ... (start).", options: ["had started", "started", "has started", "start"], correct: "had started" },
+    { question: "If she ... (study) harder, she would pass the exam.", options: ["studied", "studies", "study", "had studied"], correct: "studied" },
+    { question: "He suggested that she ... (go) to the doctor.", options: ["go", "went", "gone", "going"], correct: "go" },
+    { question: "I wish I ... (know) the answer.", options: ["know", "knew", "known", "knowing"], correct: "knew" },
+    { question: "They have been waiting for hours, but he ... (not arrive) yet.", options: ["has not arrived", "did not arrive", "was not arriving", "had not arrived"], correct: "has not arrived" },
+    { question: "She ... (live) in Paris for three years before moving to London.", options: ["had lived", "has lived", "lived", "was living"], correct: "had lived" },
+    { question: "If I ... (be) you, I would take that job.", options: ["were", "was", "am", "be"], correct: "were" },
+    { question: "By next year, I ... (complete) my degree.", options: ["will have completed", "will complete", "completed", "completing"], correct: "will have completed" },
+    { question: "He told me that he ... (buy) a new car.", options: ["bought", "has bought", "had bought", "buy"], correct: "had bought" },
+    { question: "I would rather you ... (not smoke) here.", options: ["did not smoke", "do not smoke", "not smoke", "does not smoke"], correct: "did not smoke" },
+    { question: "She suggested ... (go) to the beach.", options: ["going", "go", "to go", "went"], correct: "going" },
+    { question: "If it ... (rain) tomorrow, we will stay inside.", options: ["rains", "rained", "will rain", "rain"], correct: "rains" },
+    { question: "Had I known, I ... (help) you.", options: ["would have helped", "will help", "helped", "help"], correct: "would have helped" },
+    { question: "They are looking forward to ... (meet) you.", options: ["meeting", "meet", "to meet", "met"], correct: "meeting" },
+    { question: "I wish I ... (can) fly.", options: ["could", "can", "will", "would"], correct: "could" },
+    { question: "She ... (not finish) her homework yet.", options: ["has not finished", "did not finish", "had not finished", "does not finish"], correct: "has not finished" },
+    { question: "If I ... (see) him, I will tell him.", options: ["see", "saw", "seen", "seeing"], correct: "see" },
+    { question: "They ... (live) here since 2010.", options: ["have lived", "had lived", "live", "lived"], correct: "have lived" },
+    { question: "By the time you arrive, we ... (leave).", options: ["will have left", "will leave", "left", "have left"], correct: "will have left" },
+    { question: "She suggested that he ... (take) a break.", options: ["take", "takes", "took", "taking"], correct: "take" }
+  ],
+  C1: [
+    { question: "If he ... (be) here, he would know what to do.", options: ["were", "was", "is", "be"], correct: "were" },
+    { question: "It is essential that she ... (attend) the meeting.", options: ["attend", "attends", "attended", "attending"], correct: "attend" },
+    { question: "Had I known about the problem, I ... (act) differently.", options: ["would have acted", "will act", "acted", "act"], correct: "would have acted" },
+    { question: "She insisted that he ... (be) on time.", options: ["be", "is", "was", "being"], correct: "be" },
+    { question: "If only I ... (have) more time.", options: ["had", "have", "has", "having"], correct: "had" },
+    { question: "The more you practice, the ... (improve) you get.", options: ["better", "best", "good", "well"], correct: "better" },
+    { question: "It was suggested that he ... (leave) early.", options: ["leave", "leaves", "left", "leaving"], correct: "leave" },
+    { question: "She would have gone if she ... (know) about it.", options: ["had known", "knew", "knows", "known"], correct: "had known" },
+    { question: "Were I in your position, I ... (do) the same.", options: ["would do", "will do", "did", "do"], correct: "would do" },
+    { question: "It's high time we ... (start) the project.", options: ["started", "start", "starting", "starts"], correct: "started" },
+    { question: "If he ... (be) to blame, he should apologize.", options: ["were", "was", "is", "be"], correct: "were" },
+    { question: "She demanded that he ... (finish) the work.", options: ["finish", "finishes", "finished", "finishing"], correct: "finish" },
+    { question: "Suppose he ... (come), what would you do?", options: ["came", "comes", "come", "coming"], correct: "came" },
+    { question: "He acts as if he ... (know) everything.", options: ["knew", "know", "knows", "known"], correct: "knew" },
+    { question: "I would rather you ... (not tell) anyone.", options: ["did not tell", "do not tell", "not tell", "does not tell"], correct: "did not tell" },
+    { question: "Had they arrived earlier, they ... (catch) the train.", options: ["would have caught", "will catch", "caught", "catch"], correct: "would have caught" },
+    { question: "It is important that she ... (be) informed.", options: ["be", "is", "was", "being"], correct: "be" },
+    { question: "If I ... (were) you, I would reconsider.", options: ["were", "was", "am", "be"], correct: "were" },
+    { question: "She recommended that he ... (see) a doctor.", options: ["see", "sees", "saw", "seeing"], correct: "see" },
+    { question: "If only I ... (could) speak French fluently.", options: ["could", "can", "will", "would"], correct: "could" }
+  ],
+  C2: [
+    { question: "The proposal was met with ... (opposition) from the community.", options: ["strong", "strongly", "strength", "strengthen"], correct: "strong" },
+    { question: "Had he ... (known) about the issue, he would have acted sooner.", options: ["known", "knew", "knowing", "know"], correct: "known" },
+    { question: "It is imperative that she ... (submit) the report by tomorrow.", options: ["submit", "submits", "submitted", "submitting"], correct: "submit" },
+    { question: "Were it ... (necessary) to cancel the event, they would notify us.", options: ["necessary", "necessarily", "necessity", "necessitate"], correct: "necessary" },
+    { question: "She suggested that he ... (apologize) for his mistake.", options: ["apologize", "apologizes", "apologized", "apologizing"], correct: "apologize" },
+    { question: "If I ... (be) to blame, I would accept responsibility.", options: ["were", "was", "am", "be"], correct: "were" },
+    { question: "Had they ... (left) earlier, they would have avoided the traffic.", options: ["left", "leave", "leaving", "leaves"], correct: "left" },
+    { question: "It is crucial that she ... (be) present at the meeting.", options: ["be", "is", "was", "being"], correct: "be" },
+    { question: "Suppose he ... (come) tomorrow, what would be your reaction?", options: ["comes", "came", "come", "coming"], correct: "comes" },
+    { question: "He acts as if he ... (have) all the answers.", options: ["had", "has", "have", "having"], correct: "had" },
+    { question: "I would rather you ... (not do) that again.", options: ["did not do", "do not do", "not do", "does not do"], correct: "did not do" },
+    { question: "Had I ... (known) about the mistake, I would have corrected it.", options: ["known", "knew", "knowing", "know"], correct: "known" }
+  ]
+};
+
+
+  let currentLevel = "A1";
+  let currentIndex = 0;
+  let score = 0;
+  let answeredQuestions = 0;
+  let autoNextTimeout;
+
+  const levelButtons = document.querySelectorAll("#levelSelector button");
+  const questionCounter = document.getElementById("questionCounter");
+  const questionText = document.getElementById("questionText");
+  const optionButtons = document.getElementById("optionButtons");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const quizContainer = document.getElementById("quizContainer");
+  const resultDiv = document.getElementById("result");
+
+  // Seviye seçimi
+  levelButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.level === currentLevel) return;
+      currentLevel = btn.dataset.level;
+      currentIndex = 0;
+      score = 0;
+      answeredQuestions = 0;
+      resultDiv.style.display = "none";
+      levelButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      showQuestion();
+    });
+  });
+
+  function showQuestion() {
+    clearTimeout(autoNextTimeout);
+    quizContainer.classList.add("fade-out");
+
+    setTimeout(() => {
+      const questionObj = quizData[currentLevel][currentIndex];
+      questionText.innerText = questionObj.question;
+
+      questionCounter.innerText = `Soru ${currentIndex + 1} / ${quizData[currentLevel].length}`;
+
+      const buttonsHtml = questionObj.options.map(opt => `<button type="button">${opt}</button>`).join("");
+      optionButtons.innerHTML = buttonsHtml;
+
+      // Butonlara tıklama olayını ekle
+      const buttons = optionButtons.querySelectorAll("button");
+      buttons.forEach(button => {
+        button.disabled = false;
+        button.classList.remove("correct", "wrong");
+        button.onclick = () => selectAnswer(button, questionObj.correct);
+      });
+
+      // Geri-İleri butonlarını ayarla
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = true;
+
+      quizContainer.classList.remove("fade-out");
+      quizContainer.classList.add("fade-in");
+
+      resultDiv.style.display = "none";
+    }, 300);
+  }
+
+  function selectAnswer(button, correctAnswer) {
+    clearTimeout(autoNextTimeout);
+
+    // Cevaplar kapansın
+    const buttons = optionButtons.querySelectorAll("button");
+    buttons.forEach(b => b.disabled = true);
+
+    if (button.innerText === correctAnswer) {
+      button.classList.add("correct");
+      score++;
+    } else {
+      button.classList.add("wrong");
+      // Doğru cevabı göster
+      buttons.forEach(b => {
+        if (b.innerText === correctAnswer) b.classList.add("correct");
+      });
+    }
+
+    answeredQuestions++;
+
+    nextBtn.disabled = false;
+
+    // 1 saniye sonra otomatik geçiş yap
+    autoNextTimeout = setTimeout(() => {
+      if (currentIndex < quizData[currentLevel].length - 1) {
+        currentIndex++;
+        showQuestion();
+      } else {
+        showResult();
+      }
+    }, 1000);
+  }
+
+  prevBtn.addEventListener("click", () => {
+    clearTimeout(autoNextTimeout);
+    if (currentIndex > 0) {
+      currentIndex--;
+      showQuestion();
+    }
+  });
+
+  nextBtn.addEventListener("click", () => {
+    clearTimeout(autoNextTimeout);
+    if (currentIndex < quizData[currentLevel].length - 1) {
+      currentIndex++;
+      showQuestion();
+    } else {
+      showResult();
+    }
+  });
+
+  function showResult() {
+    quizContainer.style.display = "none";
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = `<h2>Test tamamlandı!</h2><p>Doğru sayınız: ${score} / ${quizData[currentLevel].length}</p>`;
+  }
+
+  // Başlangıçta ilk soruyu göster
+  showQuestion();
+
+</script>
+
+</body>
+</html>
